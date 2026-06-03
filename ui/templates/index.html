@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<title>UATU</title>
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+
+<!-- Glass Header + Top Nav -->
+<header class="app-header">
+  <div class="header-inner">
+    <div class="header-title">
+      <div class="logo-mark">
+        <svg class="logo-eye" viewBox="0 0 32 32" width="28" height="28">
+          <circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="2" opacity="0.3"/>
+          <circle cx="16" cy="16" r="9" fill="none" stroke="currentColor" stroke-width="2.2"/>
+          <circle cx="16" cy="16" r="4" fill="currentColor"/>
+          <circle cx="14.5" cy="14.5" r="1.5" fill="#fff" opacity="0.8"/>
+        </svg>
+      </div>
+      <div class="header-brand">
+        <h1>UATU</h1>
+        <span class="header-tagline">解决Agent落地的最后一公里</span>
+      </div>
+    </div>
+    <nav class="top-nav" id="topNav">
+      <button class="nav-item active" data-nav="l1" onclick="navigate('l1')">
+        <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <span>概览</span>
+      </button>
+      <button class="nav-item" data-nav="l2" onclick="navigate('l2')">
+        <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        <span>会话</span>
+      </button>
+      <button class="nav-item" data-nav="l5" onclick="navigate('l5')">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+        <span>模型</span>
+      </button>
+      <button class="nav-item" data-nav="l7" onclick="navigate('l7')">
+        <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        <span>策略</span>
+      </button>
+      <button class="nav-item" data-nav="l8" onclick="navigate('l8')">
+        <svg viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+        <span>日志</span>
+      </button>
+    </nav>
+    <div class="header-actions">
+      <button class="icon-btn has-label" aria-label="检查更新" title="检查更新" onclick="manualCheckUpdate()">
+        <svg viewBox="0 0 24 24"><path d="M21.5 2v6h-6"/><path d="M21.34 15.57a10 10 0 1 1-.57-8.38"/></svg>
+        <span>检查更新</span>
+      </button>
+      <button class="icon-btn has-label" aria-label="反馈意见" title="反馈意见" onclick="openFeedbackModal()">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span>反馈</span>
+      </button>
+      <span id="headerStatus" class="status-pill"><span class="dot"></span><span>检测中</span></span>
+      <button id="alertBell" class="icon-btn" aria-label="通知" onclick="openAlertDrawer()">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="alert-count" id="alertCount" hidden>0</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Update banner -->
+<div id="updateBanner" class="update-banner" hidden>
+  <div class="update-info">
+    <span class="update-text"></span>
+    <div class="update-changelog" id="updateChangelog"></div>
+  </div>
+  <div class="update-actions" id="updateActions">
+    <button class="btn-filled btn-sm install-btn">安装更新</button>
+    <button class="btn-plain btn-sm dismiss-btn">稍后</button>
+  </div>
+  <div class="update-progress" id="updateProgress" hidden>
+    <span class="progress-spinner"></span>
+    <span class="progress-text" id="progressText"></span>
+  </div>
+</div>
+<div id="view-l1" class="view active">
+  <div class="anomaly-banner" id="anomalyBanner" hidden></div>
+  <div class="view-title">
+    <h2>概览</h2>
+    <p>系统健康总览</p>
+  </div>
+  <div class="cards" id="healthCards"></div>
+  <div class="row">
+    <div class="panel">
+      <div class="panel-title">模型吞吐效率</div>
+      <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">成本分布</div>
+      <div class="chart-wrap"><canvas id="costChart"></canvas></div>
+    </div>
+  </div>
+  <div class="panel" id="anomalyPanel">
+    <div class="panel-title">最近异常</div>
+    <div id="anomalyList"></div>
+  </div>
+</div>
+
+<!-- L2: Session List -->
+<div id="view-l2" class="view">
+  <div class="view-title">
+    <h2>会话</h2>
+    <p>活跃与历史会话</p>
+  </div>
+  <div class="toolbar">
+    <div class="search-pill">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="search" id="sessionSearch" placeholder="搜索 session / model…">
+    </div>
+    <div class="segmented" id="sessionSort">
+      <button class="seg active" data-sort="time">时间</button>
+      <button class="seg" data-sort="cost">成本</button>
+      <button class="seg" data-sort="quality">质量</button>
+      <button class="seg" data-sort="tokens">Tokens</button>
+      <button class="seg" data-sort="latency">延迟</button>
+    </div>
+    <div class="segmented date-seg" id="dateRange">
+      <button class="seg" data-range="1h">1h</button>
+      <button class="seg" data-range="6h">6h</button>
+      <button class="seg" data-range="24h">24h</button>
+      <button class="seg" data-range="7d">7d</button>
+      <button class="seg active" data-range="all">全部</button>
+    </div>
+    <button class="btn-filled" onclick="loadSessionList()">刷新</button>
+  </div>
+  <div class="table-wrap">
+    <table class="session-table" id="sessionTable">
+      <thead><tr>
+        <th>Session</th><th>延迟</th><th>干预</th><th>最长单轮</th><th>质量</th><th>成本</th><th></th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div class="pagination" id="sessionPager"></div>
+</div>
+
+<!-- L3: Session Detail -->
+<div id="view-l3" class="view">
+  <button class="back-link" onclick="navigate('l2')">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    会话列表
+  </button>
+  <div class="detail-header-row">
+    <span id="detailTitle" class="detail-title"></span>
+    <div class="session-profile-bind" id="sessionProfileBind">
+      <span class="bind-label">路由策略:</span>
+      <select id="sessionProfileSelect" onchange="bindSessionProfile(this.value)">
+        <option value="">自动 (规则匹配)</option>
+        <option value="cheap">cheap (省钱)</option>
+        <option value="premium">premium (高质)</option>
+        <option value="balanced">balanced (均衡)</option>
+      </select>
+      <span id="bindStatus" class="bind-status"></span>
+    </div>
+  </div>
+
+  <div class="tab-segmented" id="detailTabs">
+    <div class="tab-indicator"></div>
+    <button class="tab-seg active" data-dtab="overview">概览</button>
+    <button class="tab-seg" data-dtab="waterfall">Trace瀑布</button>
+    <button class="tab-seg" data-dtab="quality-eval">质量评估</button>
+    <button class="tab-seg" data-dtab="model-dispatch">模型调度</button>
+    <button class="tab-seg" data-dtab="turns">Turn回放</button>
+  </div>
+
+  <div id="dtab-overview" class="dtab active"></div>
+  <div id="dtab-waterfall" class="dtab"></div>
+  <div id="dtab-quality-eval" class="dtab"></div>
+  <div id="dtab-model-dispatch" class="dtab"></div>
+  <div id="dtab-turns" class="dtab">
+    <div id="turnPages"></div>
+    <div class="pagination" id="turnPager"></div>
+  </div>
+</div>
+
+
+<!-- L5: Model (merged L5+L8) -->
+<div id="view-l5" class="view">
+  <div class="view-title">
+    <h2>模型</h2>
+    <p>使用中的模型与性能对比</p>
+  </div>
+  <div class="cards" id="genSummaryCards"></div>
+  <div class="toolbar">
+    <button class="btn-filled" onclick="openAddModelModal()">添加模型</button>
+    <button class="btn-tinted" onclick="openProviderModal()">管理 Provider</button>
+    <button class="btn-plain" onclick="loadModelView()">刷新</button>
+  </div>
+  <div class="profile-explainer">
+    <div class="profile-explainer-item premium">
+      <div class="profile-explainer-icon">★</div>
+      <div>
+        <div class="profile-explainer-name">高级 Premium</div>
+        <div class="profile-explainer-desc">用于主任务执行——代码编写、文件修改、复杂推理。这类请求直接决定输出质量，应放入能力最强的模型。</div>
+      </div>
+    </div>
+    <div class="profile-explainer-item balanced">
+      <div class="profile-explainer-icon">⚖</div>
+      <div>
+        <div class="profile-explainer-name">均衡 Balanced</div>
+        <div class="profile-explainer-desc">用于辅助性请求——意图识别、中间处理、需要一定理解能力但无需顶级模型的场景。在质量与成本之间取得平衡。</div>
+      </div>
+    </div>
+    <div class="profile-explainer-item cheap">
+      <div class="profile-explainer-icon">$</div>
+      <div>
+        <div class="profile-explainer-name">经济 Cheap</div>
+        <div class="profile-explainer-desc">用于低质量要求的后台请求——网络搜索整理、文件探索、标题生成。模型只负责格式化或汇总，用便宜模型不影响最终结果。</div>
+      </div>
+    </div>
+  </div>
+  <div id="modelGroupContainer"></div>
+  <div class="filter-bar" id="genFilters"></div>
+  <div class="row">
+    <div class="panel">
+      <div class="panel-title">Token 消耗对比</div>
+      <div class="chart-wrap"><canvas id="genTokenChart"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">延迟分布对比</div>
+      <div class="chart-wrap"><canvas id="genLatencyChart"></canvas></div>
+    </div>
+  </div>
+  <details class="panel-collapsible">
+    <summary class="panel-title" style="cursor:pointer">调用明细 (最近100条)</summary>
+    <div class="table-wrap" id="genTableWrap"></div>
+  </details>
+</div>
+
+
+<!-- L7: Strategy Engine -->
+<div id="view-l7" class="view">
+  <div class="view-title">
+    <h2>策略</h2>
+    <p>路由策略规则管理</p>
+  </div>
+  <div class="cards" id="strategyCards"></div>
+  <div class="toolbar">
+    <button class="btn-filled" onclick="openStrategyModal()">+ 新建规则</button>
+    <button class="btn-plain" onclick="loadStrategyView()">刷新</button>
+  </div>
+  <div class="dispatch-chain">
+    <span class="dispatch-chain-label">路由优先级:</span>
+    <span class="dispatch-step">Session 锁定</span>
+    <span class="dispatch-arrow">→</span>
+    <span class="dispatch-step dispatch-active">策略规则</span>
+    <span class="dispatch-arrow">→</span>
+    <span class="dispatch-step">Session 绑定 <span class="dispatch-note">(main角色首轮后生效)</span></span>
+    <span class="dispatch-arrow">→</span>
+    <span class="dispatch-step">本地规则</span>
+    <span class="dispatch-arrow">→</span>
+    <span class="dispatch-step">默认</span>
+  </div>
+  <div class="panel" id="builtinRulesPanel">
+    <div class="panel-title" style="display:flex;align-items:center;gap:8px">
+      保质降本规则
+      <span class="tag-beta" style="font-size:11px;padding:2px 6px;border-radius:4px;background:var(--accent-green,#22c55e);color:#fff">推荐</span>
+    </div>
+    <div id="builtinRulesBody"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">规则列表</div>
+    <div class="table-wrap">
+      <table class="fossil-table" id="strategyRuleTable">
+        <thead><tr>
+          <th>ID</th><th>优先级</th><th>匹配条件</th><th>动作</th>
+          <th>状态</th><th>探索</th><th>启用</th><th>操作</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="panel" id="trafficFlowPanel" style="display:none">
+    <div class="panel-title">流量分布</div>
+    <div class="table-wrap" id="trafficFlowBody"></div>
+  </div>
+  <details class="panel-collapsible" open>
+    <summary class="panel-title" style="cursor:pointer">策略分析</summary>
+    <div class="row">
+      <div class="panel">
+        <div class="panel-title">Dispatch Source 分布</div>
+        <div class="chart-wrap"><canvas id="dispatchChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">规则命中统计</div>
+        <div class="chart-wrap"><canvas id="ruleHitChart"></canvas></div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="panel">
+        <div class="panel-title">Agent Role 分布</div>
+        <div class="chart-wrap"><canvas id="roleDistChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Role Family 成本</div>
+        <div class="chart-wrap"><canvas id="roleFamilyChart"></canvas></div>
+      </div>
+    </div>
+  </details>
+</div>
+
+
+<!-- Add Model Modal -->
+<div id="addModelModal" class="modal-scrim" hidden>
+  <div class="modal-panel modal-sm">
+    <h3>添加模型</h3>
+    <form id="addModelForm" onsubmit="return saveNewModel(event)">
+      <div class="field-grid">
+        <label>模型名称 <input type="text" name="model_name" required placeholder="如 Claude-Opus-4.6"></label>
+        <label>Provider (供应商)
+          <select name="provider" id="addModelProviderSelect" required onchange="onAddModelProviderChange(this)">
+            <option value="">-- 选择 Provider --</option>
+          </select>
+        </label>
+        <label>Type (协议类型)
+          <select name="model_type" required onchange="onAddModelTypeChange(this)">
+            <option value="OpenAI">OpenAI</option>
+            <option value="Anthropic">Anthropic</option>
+          </select>
+        </label>
+        <label>分组（可多选）
+          <div class="profile-toggle-group" id="addModelProfiles">
+            <label class="profile-toggle"><input type="checkbox" name="group_name" value="premium" checked> 高级</label>
+            <label class="profile-toggle"><input type="checkbox" name="group_name" value="balanced"> 均衡</label>
+            <label class="profile-toggle"><input type="checkbox" name="group_name" value="cheap"> 经济</label>
+          </div>
+        </label>
+        <label>API Base <input type="text" name="api_base" placeholder="自动从 Provider 填入，可留空"></label>
+        <label>API Key <input type="password" name="api_key" placeholder="已有供应商可留空"></label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-plain" onclick="closeAddModelModal()">取消</button>
+        <button type="submit" class="btn-filled">保存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Provider Management Modal -->
+<div id="providerModal" class="modal-scrim" hidden>
+  <div class="modal-panel" style="max-width:720px">
+    <div class="modal-header">
+      <h3>Provider 管理</h3>
+      <button class="modal-close" onclick="closeProviderModal()">✕</button>
+    </div>
+    <div id="providerList" style="margin-bottom:16px"></div>
+    <div id="provAddSection" class="prov-add-section">
+      <button class="prov-add-toggle" id="provAddToggle" onclick="toggleProvAddForm()">＋ 添加新 Provider</button>
+      <div id="provAddForm" class="prov-add-form" hidden>
+        <div class="field-grid">
+          <label>名称
+            <input id="provNewName" type="text" placeholder="e.g. my-provider" autocomplete="off">
+          </label>
+          <label>类型
+            <select id="provNewType" onchange="onProvTypeChange()">
+              <option value="openai">OpenAI 协议</option>
+              <option value="anthropic">Anthropic 协议</option>
+            </select>
+          </label>
+          <label style="grid-column:1/-1">Base URL
+            <input id="provNewUrl" type="url" placeholder="https://api.openai.com/v1" autocomplete="off">
+          </label>
+          <label style="grid-column:1/-1">API Key
+            <input id="provNewKey" type="password" placeholder="sk-…" autocomplete="off">
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-plain" onclick="toggleProvAddForm()">取消</button>
+          <button class="btn-filled" onclick="addProvider()">确认添加</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-plain" onclick="closeProviderModal()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Model to Provider Modal -->
+<div id="addModelToProviderModal" class="modal-scrim" hidden>
+  <div class="modal-panel modal-sm">
+    <div class="modal-header">
+      <h3>为 <span id="addModelToProviderName"></span> 添加模型</h3>
+      <button class="modal-close" onclick="closeAddModelToProviderModal()">✕</button>
+    </div>
+    <div class="field-grid">
+      <label>模型名称<input id="addMtpModelName" type="text" placeholder="如 Claude-Opus-4.6" autocomplete="off"></label>
+      <label>分组（可多选）
+        <div class="profile-toggle-group" id="addMtpProfiles">
+          <label class="profile-toggle"><input type="checkbox" value="premium" checked> 高级</label>
+          <label class="profile-toggle"><input type="checkbox" value="balanced"> 均衡</label>
+          <label class="profile-toggle"><input type="checkbox" value="cheap"> 经济</label>
+        </div>
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-filled" onclick="saveAddModelToProvider()">添加</button>
+      <button class="btn-plain" onclick="closeAddModelToProviderModal()">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Provider Modal -->
+<div id="editProviderModal" class="modal-scrim" hidden>
+  <div class="modal-panel modal-sm">
+    <div class="modal-header">
+      <h3>编辑 Provider</h3>
+      <button class="modal-close" onclick="closeEditProviderModal()">✕</button>
+    </div>
+    <input id="editProvOrigName" type="hidden">
+    <div class="field-grid">
+      <label>名称<input id="editProvName" type="text" autocomplete="off"></label>
+      <label>类型
+        <select id="editProvType">
+          <option value="openai">OpenAI 协议</option>
+          <option value="anthropic">Anthropic 协议</option>
+        </select>
+      </label>
+      <label style="grid-column:1/-1">Base URL<input id="editProvUrl" type="url" autocomplete="off"></label>
+      <label style="grid-column:1/-1">API Key（留空保持不变）<input id="editProvKey" type="password" autocomplete="off" placeholder="留空则不修改"></label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-filled" onclick="saveEditProvider()">保存</button>
+      <button class="btn-plain" onclick="closeEditProviderModal()">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Model Modal -->
+<div id="editModelModal" class="modal-scrim" hidden>
+  <div class="modal-panel modal-sm">
+    <h3>编辑模型</h3>
+    <form id="editModelForm" onsubmit="return saveEditModel(event)">
+      <input type="hidden" name="orig_model_name">
+      <input type="hidden" name="provider">
+      <div class="field-grid">
+        <label>模型名称 <input type="text" name="model_name" required></label>
+        <label>Provider <input type="text" name="provider_display" readonly class="input-readonly"></label>
+        <label>协议类型
+          <select name="model_type" required>
+            <option value="OpenAI">OpenAI</option>
+            <option value="Anthropic">Anthropic</option>
+          </select>
+        </label>
+        <label>分组（可多选）
+          <div class="profile-toggle-group" id="editModelProfiles"></div>
+        </label>
+        <label>API Base <input type="text" name="api_base" placeholder="留空则不修改"></label>
+        <label>API Key <input type="password" name="api_key" placeholder="留空则不修改"></label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-plain" onclick="closeEditModelModal()">取消</button>
+        <button type="submit" class="btn-filled">保存</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Terminal Log View -->
+<div id="view-l8" class="view">
+  <div class="view-title">
+    <h2>服务日志</h2>
+    <p>实时终端输出</p>
+  </div>
+  <div class="terminal-toolbar">
+    <div class="terminal-filters">
+      <button class="filter-pill active" onclick="filterTermLog('all',this)">全部</button>
+      <button class="filter-pill" onclick="filterTermLog('info',this)">Info</button>
+      <button class="filter-pill" onclick="filterTermLog('warn',this)">Warn</button>
+      <button class="filter-pill" onclick="filterTermLog('error',this)">Error</button>
+      <span class="filter-sep"></span>
+      <select id="termSessionFilter" class="term-session-select" onchange="filterTermSession(this.value)">
+        <option value="all">所有 Session</option>
+      </select>
+    </div>
+    <div class="terminal-actions">
+      <label class="auto-scroll-label"><input type="checkbox" id="termAutoScroll" checked onchange="termAutoScrollEnabled=this.checked"> 自动滚动</label>
+      <button class="btn-plain btn-sm" onclick="clearTermLog()">清屏</button>
+    </div>
+  </div>
+  <div class="terminal-container" id="terminalLog"></div>
+</div>
+
+<!-- Strategy Rule Modal -->
+<div id="strategyModal" class="modal-scrim" hidden onclick="if(event.target===this)closeStrategyModal()">
+  <div class="modal-panel">
+    <h3 id="strategyModalTitle">新建规则</h3>
+    <div id="intentStep" class="intent-grid">
+      <div class="intent-card" onclick="selectIntent('save')">
+        <div class="intent-icon" style="color:var(--green)">$</div>
+        <div class="intent-title">省钱</div>
+        <div class="intent-desc">子代理/侧查询/压缩走便宜模型</div>
+      </div>
+      <div class="intent-card" onclick="selectIntent('quality')">
+        <div class="intent-icon" style="color:var(--orange)">★</div>
+        <div class="intent-title">保质量</div>
+        <div class="intent-desc">关键写入操作走高质量模型</div>
+      </div>
+      <div class="intent-card" onclick="selectIntent('split')">
+        <div class="intent-icon" style="color:var(--blue)">⇆</div>
+        <div class="intent-title">分流</div>
+        <div class="intent-desc">按权重分配到多个 Profile</div>
+      </div>
+      <div class="intent-card" onclick="selectIntent('custom')">
+        <div class="intent-icon" style="color:var(--purple)">⚙</div>
+        <div class="intent-title">自定义</div>
+        <div class="intent-desc">完整表单，精确控制</div>
+      </div>
+    </div>
+    <div id="formStep" style="display:none">
+    <div class="template-bar" id="templateBar">
+      <span class="template-label">快速模板:</span>
+    </div>
+    <form id="strategyForm" onsubmit="return saveStrategy(event)">
+      <div class="field-grid">
+        <label>匹配角色
+          <select name="agent_role">
+            <option value="">全部 (通配)</option>
+            <optgroup label="按家族匹配">
+              <option value="main">main — 所有主对话</option>
+              <option value="subagent">subagent — 所有子代理</option>
+              <option value="sidequery">sidequery — 所有侧查询</option>
+              <option value="compaction">compaction — 上下文压缩</option>
+            </optgroup>
+            <optgroup label="Main 精确角色">
+              <option value="main:first_turn">main:first_turn — 首轮</option>
+              <option value="main:user_turn">main:user_turn — 用户轮</option>
+              <option value="main:tool:info">main:tool:info — 读取工具</option>
+              <option value="main:tool:exec">main:tool:exec — 执行工具</option>
+              <option value="main:tool:mutation">main:tool:mutation — 写入工具</option>
+              <option value="main:tool:coord">main:tool:coord — 协调工具</option>
+              <option value="main:tool:flow">main:tool:flow — 流程工具</option>
+              <option value="main:sdk">main:sdk — SDK调用</option>
+            </optgroup>
+            <optgroup label="SubAgent 精确角色">
+              <option value="subagent:explore">subagent:explore</option>
+              <option value="subagent:general">subagent:general</option>
+              <option value="subagent:plan">subagent:plan</option>
+              <option value="subagent:guide">subagent:guide</option>
+              <option value="subagent:verification">subagent:verification</option>
+              <option value="subagent:fork">subagent:fork</option>
+            </optgroup>
+            <optgroup label="SideQuery 精确角色">
+              <option value="sidequery:title">sidequery:title</option>
+              <option value="sidequery:naming">sidequery:naming</option>
+              <option value="sidequery:web_search">sidequery:web_search</option>
+              <option value="sidequery:web_fetch">sidequery:web_fetch</option>
+              <option value="sidequery:other">sidequery:other</option>
+            </optgroup>
+            <optgroup label="其他">
+              <option value="raw_api">raw_api — 直接 API 调用</option>
+            </optgroup>
+          </select>
+        </label>
+        <label>路由到
+          <select name="profile" id="stratProfileInput">
+            <option value="">选择 Profile…</option>
+          </select>
+        </label>
+        <label>优先级 <input type="number" name="priority_order" value="100" min="1"></label>
+      </div>
+      <div class="field-grid">
+        <label>限定 Session
+          <select name="session_id" id="strategySessionSelect">
+            <option value="">全局（不限）</option>
+            <optgroup label="按入口类型">
+              <option value="__sdk__">所有 Claude SDK（sdk-cli / sdk-ts）</option>
+              <option value="__sdk_cli__">仅 claude -p（sdk-cli）</option>
+            </optgroup>
+            <optgroup label="具体会话" id="sessionOptgroup">
+            </optgroup>
+          </select>
+        </label>
+        <label>匹配模型 <input type="text" name="model_pattern" placeholder="子串匹配，如 opus"></label>
+      </div>
+
+      <details class="field-advanced" id="strategyAdvanced">
+        <summary>高级选项</summary>
+        <label class="field-full">CEL 表达式 <input type="text" name="cel_expr" placeholder='如 msg_count > 5 && has_code' id="celExprInput"></label>
+        <div class="cel-examples" id="celExamples">
+          <span class="cel-hint">点击填入:</span>
+          <button type="button" class="cel-chip" onclick="fillCel('msg_count > 20')">长对话</button>
+          <button type="button" class="cel-chip" onclick="fillCel('has_code == true')">含代码</button>
+          <button type="button" class="cel-chip" onclick="fillCel('tool_call_count > 5')">多工具</button>
+          <button type="button" class="cel-chip" onclick="fillCel('is_retrial == true')">重试</button>
+          <button type="button" class="cel-chip" onclick="fillCel('user_msg_length > 2000')">长消息</button>
+          <button type="button" class="cel-chip" onclick="fillCel('msg_count <= 3 && !has_code')">简单问答</button>
+          <button type="button" class="cel-chip" onclick="fillCel('cc_entrypoint == &quot;sdk-cli&quot;')">SDK调用</button>
+        </div>
+        <div class="cel-vars">
+          <span class="cel-hint">可用变量:</span>
+          <code>msg_count</code> <code>tool_call_count</code> <code>has_code</code> <code>has_tools</code>
+          <code>user_msg_length</code> <code>is_retrial</code> <code>is_main</code> <code>is_subagent</code>
+          <code>is_sidequery</code> <code>model</code> <code>agent_role</code> <code>agent_role_family</code>
+          <code>tool_category</code> <code>cluster_id</code> <code>cc_entrypoint</code>
+        </div>
+        <div class="field-grid">
+          <label>加权路由 <input type="text" name="weighted" placeholder='[{"profile":"cheap","weight":90}]'></label>
+          <label><input type="checkbox" name="is_exploration"> 探索模式</label>
+          <label>探索预算 <input type="number" name="exploration_budget" value="0" min="0"></label>
+        </div>
+        <input type="hidden" name="source" value="manual">
+        <input type="hidden" name="confidence" value="1.0">
+        <input type="hidden" name="cluster_id" value="">
+      </details>
+      <label class="field-full"><input type="checkbox" name="enabled" checked> 启用</label>
+      <input type="hidden" name="rule_id" value="">
+      <div class="modal-actions">
+        <button type="button" class="btn-plain" onclick="closeStrategyModal()">取消</button>
+        <button type="submit" class="btn-filled">保存</button>
+      </div>
+    </form>
+    </div><!-- /formStep -->
+  </div>
+</div>
+
+<!-- Feedback Modal -->
+<div id="feedbackModal" class="modal-scrim" hidden>
+  <div class="modal-panel modal-sm">
+    <h3>反馈意见</h3>
+    <form id="feedbackForm" onsubmit="return submitFeedback(event)">
+      <div class="field-grid">
+        <label>反馈类型
+          <select name="type">
+            <option value="bug">Bug 报告</option>
+            <option value="feature">功能建议</option>
+            <option value="other" selected>其他</option>
+          </select>
+        </label>
+        <label>联系方式 (可选) <input type="text" name="contact" placeholder="邮箱 / 微信 / GitHub"></label>
+      </div>
+      <label class="field-full">反馈内容 *
+        <textarea name="message" required rows="5" maxlength="2000" placeholder="请描述你遇到的问题或建议..." oninput="updateFeedbackCharCount()"></textarea>
+        <span class="feedback-char-count" id="feedbackCharCount">0 / 2000</span>
+      </label>
+      <div class="feedback-img-label">截图 (可选)<span class="feedback-img-hint">单张最大 2MB，最多 3 张</span></div>
+      <div class="feedback-images" id="feedbackImages">
+        <div class="feedback-img-slot" data-idx="0" tabindex="0" onclick="triggerFeedbackSlotPaste(0)" onpaste="_handleSlotPaste(event,0)">
+          <span class="slot-placeholder">粘贴图片</span>
+        </div>
+        <div class="feedback-img-slot" data-idx="1" tabindex="0" onclick="triggerFeedbackSlotPaste(1)" onpaste="_handleSlotPaste(event,1)">
+          <span class="slot-placeholder">粘贴图片</span>
+        </div>
+        <div class="feedback-img-slot" data-idx="2" tabindex="0" onclick="triggerFeedbackSlotPaste(2)" onpaste="_handleSlotPaste(event,2)">
+          <span class="slot-placeholder">粘贴图片</span>
+        </div>
+      </div>
+      <div class="feedback-status" id="feedbackStatus"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-plain" onclick="closeFeedbackModal()">取消</button>
+        <button type="submit" class="btn-filled" id="feedbackSubmitBtn">提交</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Toast notifications -->
+<div id="toastStack" class="toast-stack" aria-live="polite"></div>
+
+<!-- Alert drawer -->
+<div id="drawerScrim" class="drawer-scrim" hidden onclick="closeAlertDrawer()"></div>
+<aside id="alertDrawer" class="alert-drawer" hidden>
+  <header>
+    <h3>实时告警</h3>
+    <button class="btn-plain" onclick="closeAlertDrawer()">完成</button>
+  </header>
+  <div class="alert-list-body" id="alertList">
+    <div class="empty">暂无告警</div>
+  </div>
+</aside>
+
+
+<script src="/static/app.js"></script>
+</body>
+</html>
