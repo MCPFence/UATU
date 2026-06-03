@@ -239,3 +239,43 @@ mod unix_impl {
 
 #[cfg(unix)]
 pub use unix_impl::ExtProcClient;
+
+#[cfg(not(unix))]
+pub struct ExtProcClient;
+
+#[cfg(not(unix))]
+impl ExtProcClient {
+    pub fn new(_cfg: &ExtProcConfig) -> Self {
+        Self
+    }
+
+    pub fn should_call_pre(&self, _cfg: &ExtProcConfig, _signals: &RequestSignals) -> bool {
+        false
+    }
+
+    pub fn should_call_post(&self, _cfg: &ExtProcConfig, _signals: &RequestSignals) -> bool {
+        false
+    }
+
+    pub async fn call_pre_request(
+        &self,
+        _session_id: &str,
+        _seq: u64,
+        _signals: &RequestSignals,
+        _body: &Value,
+        _attempt_model: Option<&str>,
+    ) -> ExtProcResult {
+        ExtProcResult::Passthrough
+    }
+
+    pub async fn call_post_response(
+        &self,
+        _session_id: &str,
+        _seq: u64,
+        _signals: &RequestSignals,
+        _request_body: &Value,
+        _response: &Value,
+    ) -> ExtProcResult {
+        ExtProcResult::Passthrough
+    }
+}
