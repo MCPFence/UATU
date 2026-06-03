@@ -1,0 +1,101 @@
+{
+  "host": "127.0.0.1",
+  "port": 3456,
+  "log_level": "info",
+  "timeout_secs": 300,
+  "providers": [
+    {
+      "name": "anthropic",
+      "type": "anthropic",
+      "api_key": "$ANTHROPIC_API_KEY",
+      "base_url": "https://api.anthropic.com",
+      "models": ["claude-opus-4-20250514", "claude-sonnet-4-20250514", "claude-haiku-4-5-20251001"]
+    },
+    {
+      "name": "openrouter",
+      "type": "openai",
+      "api_key": "$OPENROUTER_API_KEY",
+      "base_url": "https://openrouter.ai/api/v1",
+      "models": ["anthropic/claude-opus-4", "anthropic/claude-sonnet-4", "anthropic/claude-haiku-4"]
+    },
+    {
+      "name": "deepseek",
+      "type": "openai",
+      "api_key": "$DEEPSEEK_API_KEY",
+      "base_url": "https://api.deepseek.com",
+      "models": ["deepseek-chat"]
+    }
+  ],
+  "priority": [
+    { "provider": "anthropic", "model": "claude-opus-4-20250514" },
+    { "provider": "openrouter", "model": "anthropic/claude-opus-4" },
+    { "provider": "deepseek", "model": "deepseek-chat" }
+  ],
+  "profiles": {
+    "premium": [
+      { "provider": "anthropic", "model": "claude-opus-4-20250514" },
+      { "provider": "openrouter", "model": "anthropic/claude-opus-4" }
+    ],
+    "balanced": [
+      { "provider": "anthropic", "model": "claude-sonnet-4-20250514" },
+      { "provider": "openrouter", "model": "anthropic/claude-sonnet-4" }
+    ],
+    "cheap": [
+      { "provider": "anthropic", "model": "claude-haiku-4-5-20251001" },
+      { "provider": "openrouter", "model": "anthropic/claude-haiku-4" },
+      { "provider": "deepseek", "model": "deepseek-chat" }
+    ]
+  },
+  "retry_codes": [429, 500, 502, 503, 529],
+  "routing": {
+    "hvr_enabled": true,
+    "memory_enabled": true,
+    "memory_db_path": "~/.cc-proxy/memory.duckdb",
+    "session_binding_ttl_secs": 7200,
+    "dispatch": {
+      "default_profile": "default",
+      "rules": [
+        { "match": { "model_pattern": "opus" },                  "profile": "premium" },
+        { "match": { "model_pattern": "sonnet" },                "profile": "balanced" },
+        { "match": { "model_pattern": "haiku" },                 "profile": "cheap" },
+        { "match": { "agent_role": "subagent" },                 "profile": "cheap" },
+        { "match": { "agent_role": "sidequery" },                "profile": "cheap" },
+        { "match": { "agent_role": "compaction" },               "profile": "cheap" },
+        { "match": { "agent_role": "main:tool:info" },           "profile": "balanced" },
+        { "match": { "agent_role": "main:tool:coord" },          "profile": "balanced" }
+      ]
+    },
+    "role_hooks": {
+      "main:tool:info": {
+        "pre_request": {
+          "override_max_tokens": 4096,
+          "cel_condition": "msg_count > 20"
+        },
+        "post_response": {
+          "log_level": "debug"
+        }
+      },
+      "subagent": {
+        "pre_request": {
+          "override_temperature": 0.3
+        }
+      },
+      "sidequery": {
+        "pre_request": {
+          "override_max_tokens": 2048
+        },
+        "post_response": {
+          "alert_on_stop_reason": ["refusal"]
+        }
+      }
+    },
+    "shadow": {
+      "enabled": false,
+      "sample_rate": 0.001,
+      "daily_budget_usd": 1.0,
+      "providers": []
+    },
+    "canary_pct": 0,
+    "tiers": []
+  }
+}

@@ -1,0 +1,11 @@
+node_modules/
+package-lock.json
+data/
+*.db
+*.db-shm
+*.db-wal
+*.log
+.DS_Store
+.env
+bin/cc-proxy-*
+cc-proxy/target/
