@@ -80,12 +80,15 @@ pub async fn handle_messages(
     let agent_family = agent.family().to_string();
     let cc_version_str = cc_version_suffix.clone().unwrap_or_default();
 
+    #[cfg(unix)]
     let ext_proc_ctx = crate::priority::ExtProcCtx {
         client: state.ext_proc.as_ref(),
         config: config.routing.ext_proc.as_ref(),
         signals: Some(&request_signals),
         session_id: &ctx.session_id,
     };
+    #[cfg(not(unix))]
+    let ext_proc_ctx = crate::priority::ExtProcCtx::none();
 
     let role_hook = config.get_role_hook(&agent_role_str, &agent_family);
 
